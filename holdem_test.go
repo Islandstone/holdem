@@ -102,7 +102,32 @@ func TestPreRound(t *testing.T) {
 		done <- true
 	})
 
-	g.NewRound()
+	g.newRound()
 
 	assert.Equal(t, 2, len(g.players))
+}
+
+func TestDeals(t *testing.T) {
+	g := New()
+
+	g.SetPreRoundCallback(func(done chan bool) {
+		g.AddPlayer("A")
+		g.AddPlayer("B")
+
+		done <- true
+	})
+
+	g.dealPreFlop()
+
+	for _, p := range(g.players) {
+		assert.True(t, len(p.Hand) == 3)
+	}
+
+	assert.True(t, len(g.community) == 0)
+	g.dealFlop()
+	assert.True(t, len(g.community) == 3)
+	g.dealTurn()
+	assert.True(t, len(g.community) == 4)
+	g.dealRiver()
+	assert.True(t, len(g.community) == 5)
 }
