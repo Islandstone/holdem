@@ -2,7 +2,12 @@ package holdem
 
 import (
 	"math/rand"
+	"time"
+	"fmt"
 )
+
+type Suit int
+type Value int
 
 const (
 	Undefined = 0
@@ -15,24 +20,30 @@ const (
 	Active = 2 // Participating in the round (checking, raised, all in)
 )
 
-var players map[string]Player
+var playerDB map[string]Player
 
-type Callback func(done chan bool)
+type Callback func(game *Game, done chan bool)
 
 type Game struct {
 	deck      []Card
 	community []Card
+	pot uint32
+	currentBet uint32
 
 	currentBetter *Player
-	players       []Player // Around the table in this round
+	// currentBetCompleted chan bool
+	players       []*Player // Around the table in this round
 	frozen        bool
 
 	// blind uint32 // Might not require blinds in IRC gameplay
 
-	preRoundCallback  Callback
+	preRoundCallback  func(*Game, chan bool)
 	postFlopCallback  Callback
 	postTurnCallback  Callback
 	postRiverCallback Callback
+
+	displayPlayerCardCallback func(string,[]Card,chan bool)
+	betCallback func(*Game, string)
 }
 
 type Player struct {
@@ -48,15 +59,45 @@ type Player struct {
 }
 
 type Card struct {
-	Suit  int
-	Value int
+	Suit
+	Value
+}
+
+func (s Suit) String() string {
+	switch s {
+	case Spades:
+		return "\u2660"
+	case Hearts:
+		return "\u2665"
+	case Diamonds:
+		return "\u2666"
+	case Clubs:
+		return "\u2663"
+	default:
+		println("INVALID SUIT IN String()")
+		return ""
+	}
+}
+
+func (v Value) String() string {
+	if v <= 10 {
+		return fmt.Sprintf("%d", v)
+	}
+
+	return string(v)
+}
+
+func (c Card) String() string {
+	return fmt.Sprintf("|%s%s|", c.Suit, c.Value)
 }
 
 func New() Game {
 	g := Game{}
 
+	rand.Seed(time.Now().UnixNano())
+
 	g.createNewDeck()
-	players = nil
+	g.players = make([]*Player, 0, 2)
 
 	return g
 }
@@ -66,29 +107,47 @@ const (
 	DECK_SIZE = 52
 )
 
-func (g *Game) SetPreRoundCallback(c func(done chan bool)) {
+func (g *Game) SetPreRoundCallback(c func(*Game, chan bool)) {
 	g.preRoundCallback = c
 }
 
+func (g *Game) SetDisplayPlayerCardCallback(c func(string,[]Card,chan bool)) {
+	g.displayPlayerCardCallback = c
+}
+
+func (g *Game) SetBetCallback(c func(*Game, string)) {
+	g.betCallback = c
+}
+
 func (g *Game) AddPlayer(name string) {
+	/*
 	if g.frozen {
 		return
 	}
+	*/
 
-	if _, exists := players[name]; exists {
+	if _, exists := playerDB[name]; exists {
 		// TODO: error value?
 		// err = errors.New("Player already exists")
 		return
 	}
 
-	p := newPlayer(name)
+	player := newPlayer(name)
 
-	if players == nil {
-		players = make(map[string]Player)
+	if playerDB == nil {
+		playerDB = make(map[string]Player)
 	}
 
-	players[name] = p
-	g.players = append(g.players, p)
+	playerDB[name] = player
+
+	g.players = append(g.players, &player)
+	// println("Appended", name, "len(g.players) ==", len(g.players))
+}
+
+func (g *Game) JoinTable(name string) {
+}
+
+func (g *Game) LeaveTable(name string) {
 }
 
 func newPlayer(name string) Player {
@@ -99,8 +158,9 @@ func (g *Game) Play() {
 	g.newRound()    // Initiate the round
 	g.dealPreFlop() // 2 cards to each player
 
-	//g.DoBets()
+	g.doBets()
 
+	/*
 	g.dealFlop() // Deal 3 community cards
 	//g.DoBets()
 	g.dealTurn() // 4th community card
@@ -111,9 +171,10 @@ func (g *Game) Play() {
 	//g.Showdown()
 
 	g.finishRound()
+	*/
 }
 
-func (g *Game) shuffle() {
+func (g *Game) shuffleDeck() {
 	newDeck := make([]Card, DECKS*DECK_SIZE)
 	p := rand.Perm(DECKS * DECK_SIZE)
 
@@ -124,11 +185,29 @@ func (g *Game) shuffle() {
 	g.deck = newDeck
 }
 
+func (g* Game) shufflePlayers() {
+	if g.players != nil {
+		g.players = append(g.players[1:], g.players[0])
+	}
+
+	/*
+	newPlayers := make([]Player, len(g.players))
+	p := rand.Perm(len(g.players))
+
+	for i, k := range p {
+		newPlayers[i] = g.players[k]
+	}
+
+	g.players = newPlayers
+	*/
+
+}
+
 func (g *Game) createNewDeck() {
 	g.deck = make([]Card, DECKS*DECK_SIZE, DECKS*DECK_SIZE)
 
-	suits := []int{Spades, Diamonds, Hearts, Clubs}
-	values := []int{'A', 'K', 'Q', 'J', 10, 9, 8, 7, 6, 5, 4, 3, 2}
+	suits := []Suit{Spades, Diamonds, Hearts, Clubs}
+	values := []Value{'A', 'K', 'Q', 'J', 10, 9, 8, 7, 6, 5, 4, 3, 2}
 
 	index := 0
 
@@ -146,14 +225,16 @@ func (g *Game) newRound() {
 	if g.preRoundCallback != nil {
 		done := make(chan bool)
 
-		go func() {
-			g.frozen = false
-			g.preRoundCallback(done)
-		}()
+		g.frozen = false
+		g.currentBet = 0
 
-		g.shuffle()
+		g.shuffleDeck()
+
+		go g.preRoundCallback(g, done) // Players register for a new round (.hit)
+		// g.shufflePlayers()
+
 		<-done
-		g.frozen = true
+		// g.frozen = true
 	}
 }
 
@@ -163,37 +244,90 @@ func (g *Game) dealCard() (c Card) {
 	return
 }
 
+func (g *Game) currentBetterDone() {
+	// g.currentBetCompleted <- true
+}
+
 func (g *Game) dealCards(n int) (c []Card) {
 	c = g.deck[:n]
 	g.deck = g.deck[n:]
 	return
 }
 
-func (g *Game) endOfBets() bool {
-	// TODO
-	// Bets should end if
-	// - there's only one player left (player wins)
-	// - all players have been asked at least once
+func (g *Game) isEndOfBets() bool {
+	for _, p := range g.players {
+		if p.Status == Folded {
+			continue
+		}
+
+		if p.Bet != g.currentBet {
+			println(p.Name, "had bet of", p.Bet, "current is", g.currentBet)
+			return false
+		}
+	}
+
 	return true
 }
 
-func (g *Game) doBets() {
-	if !g.endOfBets() {
-		g.doBets()
+func (g *Game) doBet() {
+	for _, player := range(g.players) {
+		if player.Status == Folded {
+			continue
+		}
+
+		g.currentBetter = player
+		g.betCallback(g, player.Name)
 	}
 }
 
-func (g *Game) PlaceBet(player string, bet uint32) {
+func (g *Game) doBets() {
+	g.doBet()
+
+	for !g.isEndOfBets() {
+		g.doBet()
+	}
+}
+
+func (g *Game) Raise(player string, bet uint32) {
+
+	g.currentBet += bet
+	println(player, "raised bet to", g.currentBet)
+	g.currentBetter.Bet = g.currentBet
+	// go g.currentBetterDone()
+}
+
+func (g *Game) Check(player string) {
+	println(player, "checked at", g.currentBet)
+	g.currentBetter.Bet = g.currentBet
+
+	// go g.currentBetterDone()
+}
+
+func (g *Game) Fold(player string) {
+	println(player, "folded")
+	g.currentBetter.Status = Folded
+	// go g.currentBetterDone()
 }
 
 func (g *Game) BetTimeout(player string) {
+	if player == g.currentBetter.Name {
+		g.currentBetter.Status = Folded
+		g.currentBetterDone()
+	}
 }
 
 func (g *Game) dealPreFlop() {
-	for _, p := range g.players {
-		p.Hand = append(p.Hand, g.dealCards(2)...)
+	for i, p := range(g.players) {
+		// p.Hand = append(p.Hand, g.dealCards(2)...)
+		g.players[i].Hand = append(p.Hand, g.dealCards(2)...)
 	}
 
+	c := make(chan bool)
+	for _, p := range(g.players) {
+		//println(p.Name, p.Hand)
+		go g.displayPlayerCardCallback(p.Name, p.Hand, c)
+		<-c
+	}
 	// g.PostFlopCallback()
 }
 

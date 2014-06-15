@@ -68,13 +68,13 @@ func TestInit(t *testing.T) {
 func TestShuffle(t *testing.T) {
 	game := New()
 
-	game.shuffle()
+	game.shuffleDeck()
 	assert.True(t, isValidDeck(game.deck))
 
 	old := make([]Card, DECKS*DECK_SIZE)
 	copy(old, game.deck)
 
-	game.shuffle()
+	game.shuffleDeck()
 	assert.True(t, isValidDeck(game.deck))
 
 	equal := true
@@ -99,10 +99,10 @@ func TestPreRound(t *testing.T) {
 		g.AddPlayer("A")
 		g.AddPlayer("B")
 
-		done <- true
+		// done <- true
 	})
 
-	g.newRound()
+	g.Play()
 
 	assert.Equal(t, 2, len(g.players))
 }
@@ -120,7 +120,7 @@ func TestDeals(t *testing.T) {
 	g.dealPreFlop()
 
 	for _, p := range(g.players) {
-		assert.True(t, len(p.Hand) == 3)
+		assert.True(t, len(p.Hand) == 2)
 	}
 
 	assert.True(t, len(g.community) == 0)
@@ -131,3 +131,25 @@ func TestDeals(t *testing.T) {
 	g.dealRiver()
 	assert.True(t, len(g.community) == 5)
 }
+
+func TestBettingPlayerCanBet(t *testing.T) {
+	return // Test disabled
+
+	g := New()
+
+	g.SetPreRoundCallback(func(done chan bool) {
+		g.AddPlayer("A")
+		g.AddPlayer("B")
+
+		// done <- true
+	})
+
+	g.dealPreFlop()
+
+	g.doBets()
+
+	assert.True(t, g.currentBetter.Name == "A")
+
+	g.Check("A", 1)
+}
+
