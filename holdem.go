@@ -8,20 +8,22 @@ import (
 
 type Suit int
 type Value int
+type RoundStatus int
+type PlayerStatus int
 
 const (
-	Undefined = 0
-	Spades    = 1
-	Diamonds  = 2
-	Hearts    = 3
-	Clubs     = 4
+	Undefined Suit = iota
+	Spades
+	Diamonds
+	Hearts
+	Clubs
 
-	Flop  = 1
-	Turn  = 2
-	River = 3
+	Flop RoundStatus = iota
+	Turn
+	River
 
-	Folded = 1 // No longer in the round
-	Active = 2 // Participating in the round (checking, raised, all in)
+	Folded PlayerStatus = iota // No longer in the round
+	Active // Participating in the round (checking, raised, all in)
 )
 
 var playerDB map[string]Player
@@ -42,7 +44,7 @@ type Game struct {
 	// blind uint32 // Might not require blinds in IRC gameplay
 
 	preRoundCallback  func(*Game, chan bool)
-	communityCallback func(int, []Card)
+	communityCallback func(RoundStatus, []Card)
 	/*
 		postFlopCallback  Callback
 		postTurnCallback  Callback
@@ -58,7 +60,7 @@ type Player struct {
 	// TODO: Replace player name with a generic pointer with user data instead
 	Name    string
 	Bet     uint32
-	Status  uint32
+	Status  PlayerStatus
 	Balance uint32
 
 	Hand []Card
@@ -126,7 +128,7 @@ func (g *Game) SetBetCallback(c func(*Game, string)) {
 	g.betCallback = c
 }
 
-func (g *Game) SetCommunityCallback(c func(int, []Card)) {
+func (g *Game) SetCommunityCallback(c func(RoundStatus, []Card)) {
 	g.communityCallback = c
 }
 
