@@ -16,6 +16,10 @@ const (
 	Hearts    = 3
 	Clubs     = 4
 
+	Flop = 1
+	Turn = 2
+	River = 3
+
 	Folded = 1 // No longer in the round
 	Active = 2 // Participating in the round (checking, raised, all in)
 )
@@ -38,9 +42,12 @@ type Game struct {
 	// blind uint32 // Might not require blinds in IRC gameplay
 
 	preRoundCallback  func(*Game, chan bool)
+	communityCallback func(int,[]Card)
+	/*
 	postFlopCallback  Callback
 	postTurnCallback  Callback
 	postRiverCallback Callback
+	*/
 
 	displayPlayerCardCallback func(string,[]Card,chan bool)
 	betCallback func(*Game, string)
@@ -119,6 +126,10 @@ func (g *Game) SetBetCallback(c func(*Game, string)) {
 	g.betCallback = c
 }
 
+func (g *Game) SetCommunityCallback(c func(int, []Card)) {
+	g.communityCallback = c
+}
+
 func (g *Game) AddPlayer(name string) {
 	/*
 	if g.frozen {
@@ -160,14 +171,14 @@ func (g *Game) Play() {
 
 	g.doBets()
 
-	/*
 	g.dealFlop() // Deal 3 community cards
-	//g.DoBets()
+	g.doBets()
 	g.dealTurn() // 4th community card
-	//g.DoBets()
+	g.doBets()
 	g.dealRiver() // 5th community card
-	//g.DoBets()
+	g.doBets()
 
+	/*
 	//g.Showdown()
 
 	g.finishRound()
@@ -289,7 +300,6 @@ func (g *Game) doBets() {
 }
 
 func (g *Game) Raise(player string, bet uint32) {
-
 	g.currentBet += bet
 	println(player, "raised bet to", g.currentBet)
 	g.currentBetter.Bet = g.currentBet
@@ -335,18 +345,22 @@ func (g *Game) dealFlop() {
 	g.community = append(g.community, g.dealCards(3)...)
 
 	// TODO: g.PostFlopCallback()
+
+	g.communityCallback(Flop, g.community)
 }
 
 func (g *Game) dealTurn() {
 	g.community = append(g.community, g.dealCard())
 
 	// TODO: g.PostTurnCallback()
+	g.communityCallback(Turn, g.community)
 }
 
 func (g *Game) dealRiver() {
 	g.community = append(g.community, g.dealCard())
 
 	// TODO: g.PostRiverCallback()
+	g.communityCallback(River, g.community)
 }
 
 func (g *Game) finishRound() {

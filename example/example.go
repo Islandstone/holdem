@@ -16,6 +16,7 @@ func main() {
 	game.SetPreRoundCallback(preRoundCallback)
 	game.SetDisplayPlayerCardCallback(displayPlayerCardsCallback)
 	game.SetBetCallback(betCallback)
+	game.SetCommunityCallback(communityCallback)
 
 	stdin = bufio.NewReader(os.Stdin)
 
@@ -57,5 +58,16 @@ func betCallback(g *h.Game, name string) {
 			g.Fold(name)
 			break out
 		}
+	}
+}
+
+func communityCallback(state int, cards []h.Card) {
+	switch state {
+	case h.Flop:
+		fmt.Printf("Flop: %s\n", cards)
+	case h.Turn:
+		fmt.Printf("Turn: %s\n", cards)
+	case h.River:
+		fmt.Printf("River: %s\n", cards)
 	}
 }
