@@ -1,9 +1,9 @@
 package holdem
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
-	"fmt"
 )
 
 type Suit int
@@ -16,8 +16,8 @@ const (
 	Hearts    = 3
 	Clubs     = 4
 
-	Flop = 1
-	Turn = 2
+	Flop  = 1
+	Turn  = 2
 	River = 3
 
 	Folded = 1 // No longer in the round
@@ -29,28 +29,28 @@ var playerDB map[string]Player
 type Callback func(game *Game, done chan bool)
 
 type Game struct {
-	deck      []Card
-	community []Card
-	pot uint32
+	deck       []Card
+	community  []Card
+	pot        uint32
 	currentBet uint32
 
 	currentBetter *Player
 	// currentBetCompleted chan bool
-	players       []*Player // Around the table in this round
-	frozen        bool
+	players []*Player // Around the table in this round
+	frozen  bool
 
 	// blind uint32 // Might not require blinds in IRC gameplay
 
 	preRoundCallback  func(*Game, chan bool)
-	communityCallback func(int,[]Card)
+	communityCallback func(int, []Card)
 	/*
-	postFlopCallback  Callback
-	postTurnCallback  Callback
-	postRiverCallback Callback
+		postFlopCallback  Callback
+		postTurnCallback  Callback
+		postRiverCallback Callback
 	*/
 
-	displayPlayerCardCallback func(string,[]Card,chan bool)
-	betCallback func(*Game, string)
+	displayPlayerCardCallback func(string, []Card, chan bool)
+	betCallback               func(*Game, string)
 }
 
 type Player struct {
@@ -118,7 +118,7 @@ func (g *Game) SetPreRoundCallback(c func(*Game, chan bool)) {
 	g.preRoundCallback = c
 }
 
-func (g *Game) SetDisplayPlayerCardCallback(c func(string,[]Card,chan bool)) {
+func (g *Game) SetDisplayPlayerCardCallback(c func(string, []Card, chan bool)) {
 	g.displayPlayerCardCallback = c
 }
 
@@ -132,9 +132,9 @@ func (g *Game) SetCommunityCallback(c func(int, []Card)) {
 
 func (g *Game) AddPlayer(name string) {
 	/*
-	if g.frozen {
-		return
-	}
+		if g.frozen {
+			return
+		}
 	*/
 
 	if _, exists := playerDB[name]; exists {
@@ -179,9 +179,9 @@ func (g *Game) Play() {
 	g.doBets()
 
 	/*
-	//g.Showdown()
+		//g.Showdown()
 
-	g.finishRound()
+		g.finishRound()
 	*/
 }
 
@@ -196,20 +196,20 @@ func (g *Game) shuffleDeck() {
 	g.deck = newDeck
 }
 
-func (g* Game) shufflePlayers() {
+func (g *Game) shufflePlayers() {
 	if g.players != nil {
 		g.players = append(g.players[1:], g.players[0])
 	}
 
 	/*
-	newPlayers := make([]Player, len(g.players))
-	p := rand.Perm(len(g.players))
+		newPlayers := make([]Player, len(g.players))
+		p := rand.Perm(len(g.players))
 
-	for i, k := range p {
-		newPlayers[i] = g.players[k]
-	}
+		for i, k := range p {
+			newPlayers[i] = g.players[k]
+		}
 
-	g.players = newPlayers
+		g.players = newPlayers
 	*/
 
 }
@@ -281,7 +281,7 @@ func (g *Game) isEndOfBets() bool {
 }
 
 func (g *Game) doBet() {
-	for _, player := range(g.players) {
+	for _, player := range g.players {
 		if player.Status == Folded {
 			continue
 		}
@@ -327,13 +327,13 @@ func (g *Game) BetTimeout(player string) {
 }
 
 func (g *Game) dealPreFlop() {
-	for i, p := range(g.players) {
+	for i, p := range g.players {
 		// p.Hand = append(p.Hand, g.dealCards(2)...)
 		g.players[i].Hand = append(p.Hand, g.dealCards(2)...)
 	}
 
 	c := make(chan bool)
-	for _, p := range(g.players) {
+	for _, p := range g.players {
 		//println(p.Name, p.Hand)
 		go g.displayPlayerCardCallback(p.Name, p.Hand, c)
 		<-c

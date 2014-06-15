@@ -119,7 +119,7 @@ func TestDeals(t *testing.T) {
 
 	g.dealPreFlop()
 
-	for _, p := range(g.players) {
+	for _, p := range g.players {
 		assert.True(t, len(p.Hand) == 2)
 	}
 
@@ -152,4 +152,3 @@ func TestBettingPlayerCanBet(t *testing.T) {
 
 	g.Check("A", 1)
 }
-
