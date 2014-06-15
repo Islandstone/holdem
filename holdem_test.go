@@ -1,8 +1,9 @@
 package holdem
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func isValidCard(c Card) bool {
@@ -93,62 +94,62 @@ func TestDeal(t *testing.T) {
 }
 
 func TestPreRound(t *testing.T) {
-	g := New()
+	game := New()
 
-	g.SetPreRoundCallback(func(done chan bool) {
+	game.SetPreRoundCallback(func(g *Game, done chan bool) {
 		g.AddPlayer("A")
 		g.AddPlayer("B")
 
 		// done <- true
 	})
 
-	g.Play()
+	game.Play()
 
-	assert.Equal(t, 2, len(g.players))
+	assert.Equal(t, 2, len(game.players))
 }
 
 func TestDeals(t *testing.T) {
-	g := New()
+	game := New()
 
-	g.SetPreRoundCallback(func(done chan bool) {
+	game.SetPreRoundCallback(func(g *Game, done chan bool) {
 		g.AddPlayer("A")
 		g.AddPlayer("B")
 
 		done <- true
 	})
 
-	g.dealPreFlop()
+	game.dealPreFlop()
 
-	for _, p := range g.players {
+	for _, p := range game.players {
 		assert.True(t, len(p.Hand) == 2)
 	}
 
-	assert.True(t, len(g.community) == 0)
-	g.dealFlop()
-	assert.True(t, len(g.community) == 3)
-	g.dealTurn()
-	assert.True(t, len(g.community) == 4)
-	g.dealRiver()
-	assert.True(t, len(g.community) == 5)
+	assert.True(t, len(game.community) == 0)
+	game.dealFlop()
+	assert.True(t, len(game.community) == 3)
+	game.dealTurn()
+	assert.True(t, len(game.community) == 4)
+	game.dealRiver()
+	assert.True(t, len(game.community) == 5)
 }
 
 func TestBettingPlayerCanBet(t *testing.T) {
 	return // Test disabled
 
-	g := New()
+	game := New()
 
-	g.SetPreRoundCallback(func(done chan bool) {
+	game.SetPreRoundCallback(func(g *Game, done chan bool) {
 		g.AddPlayer("A")
 		g.AddPlayer("B")
 
 		// done <- true
 	})
 
-	g.dealPreFlop()
+	game.dealPreFlop()
 
-	g.doBets()
+	game.doBets()
 
-	assert.True(t, g.currentBetter.Name == "A")
+	assert.True(t, game.currentBetter.Name == "A")
 
-	g.Check("A", 1)
+	game.Check("A")
 }
