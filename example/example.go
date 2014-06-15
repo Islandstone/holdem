@@ -61,7 +61,7 @@ func betCallback(g *h.Game, name string) {
 	}
 }
 
-func communityCallback(state int, cards []h.Card) {
+func communityCallback(state h.RoundStatus, cards []h.Card) {
 	switch state {
 	case h.Flop:
 		fmt.Printf("Flop: %s\n", cards)
