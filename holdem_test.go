@@ -10,7 +10,7 @@ func isValidCard(c Card) bool {
 	return c >= 0 && c < (52*4)
 }
 
-func isValidDeck(deck []Card) bool {
+func isValidDeck(deck []Card, t *testing.T) bool {
 	count := make(map[Card]int)
 
 	for _, v := range deck {
@@ -18,8 +18,8 @@ func isValidDeck(deck []Card) bool {
 	}
 
 	for k, v := range count {
-		if v != DECKS {
-			println("Invalid card count:", k.Suit, k.Value, v)
+		if v != Decks {
+			t.Error("Invalid card count:", k)
 			return false
 		}
 	}
@@ -31,34 +31,34 @@ func TestInit(t *testing.T) {
 	game := New()
 
 	assert.NotEmpty(t, game.deck)
-	assert.Equal(t, DECKS*DECK_SIZE, len(game.deck))
+	assert.Equal(t, Decks*DeckSize, len(game.deck))
 
 	valid := true
 	for _, v := range game.deck {
 		if !isValidCard(v) {
 
 			assert.Fail(t, "Invalid card")
-			println(v.Suit, v.Value)
+			t.Log(v)
 			valid = false
 			break
 		}
 	}
 
 	assert.True(t, valid)
-	assert.True(t, isValidDeck(game.deck))
+	assert.True(t, isValidDeck(game.deck, t))
 }
 
 func TestShuffle(t *testing.T) {
 	game := New()
 
 	game.shuffleDeck()
-	assert.True(t, isValidDeck(game.deck))
+	assert.True(t, isValidDeck(game.deck, t))
 
-	old := make([]Card, DECKS*DECK_SIZE)
+	old := make([]Card, Decks*DeckSize)
 	copy(old, game.deck)
 
 	game.shuffleDeck()
-	assert.True(t, isValidDeck(game.deck))
+	assert.True(t, isValidDeck(game.deck, t))
 
 	equal := true
 	for i, v := range old {
@@ -76,6 +76,7 @@ func TestDeal(t *testing.T) {
 }
 
 func TestPreRound(t *testing.T) {
+	t.SkipNow()
 	game := New()
 
 	game.SetPreRoundCallback(func(g *Game, done chan bool) {

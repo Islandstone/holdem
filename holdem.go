@@ -9,6 +9,11 @@ type RoundStatus int
 type PlayerStatus int
 
 const (
+	Decks    = 1
+	DeckSize = 52
+)
+
+const (
 	Flop RoundStatus = iota
 	Turn
 	River
@@ -68,11 +73,6 @@ func New() Game {
 
 	return g
 }
-
-const (
-	DECKS     = 6
-	DECK_SIZE = 52
-)
 
 func (g *Game) SetPreRoundCallback(c func(*Game, chan bool)) {
 	g.preRoundCallback = c
@@ -146,8 +146,8 @@ func (g *Game) Play() {
 }
 
 func (g *Game) shuffleDeck() {
-	newDeck := make([]Card, DECKS*DECK_SIZE)
-	p := rand.Perm(DECKS * DECK_SIZE)
+	newDeck := make([]Card, Decks*DeckSize)
+	p := rand.Perm(Decks * DeckSize)
 
 	for i, k := range p {
 		newDeck[i] = g.deck[k]
@@ -175,9 +175,9 @@ func (g *Game) shufflePlayers() {
 }
 
 func (g *Game) createNewDeck() {
-	g.deck = make([]Card, DECKS*DECK_SIZE)
+	g.deck = make([]Card, Decks*DeckSize)
 
-	cards := 52 * 4 // cards in deck * suits
+	cards := 52 // cards in deck * suits
 	for i := 0; i < cards; i++ {
 		g.deck[i] = Card(i)
 	}
