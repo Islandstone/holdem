@@ -57,13 +57,13 @@ func TestHand_Display(t *testing.T) {
 	}
 
 	hand := NewHand(player, table)
-	exp := "Two pair: K♣'s and Q♣'s with A♣ kicker"
+	exp := "Two pair: K's and Q's with A kicker"
 	if val, str := hand.Display(); val == 0 || str != exp {
 		t.Errorf(`Expected: "%s", got: "%s"`, exp, str)
 	}
 
 	hand = NewHandStr("ad ac as 3d 4h 10h 10d")
-	exp = "Full house: A♣'s and 10♣'s"
+	exp = "Full house: A's and 10's"
 	if val, str := hand.Display(); val == 0 || str != exp {
 		t.Errorf(`Expected: "%s", got: "%s"`, exp, str)
 	}

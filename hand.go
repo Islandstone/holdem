@@ -155,21 +155,21 @@ func (h HandValue) String() string {
 	cls := h.Class()
 	switch cls {
 	case HighCard:
-		fmt.Fprintf(b, "High card: %v", h.TopCard())
+		fmt.Fprintf(b, "High card: %-v", h.TopCard())
 	case Pair:
-		fmt.Fprintf(b, "One pair: %v", h.TopCard())
+		fmt.Fprintf(b, "One pair: %-v", h.TopCard())
 	case TwoPair:
-		fmt.Fprintf(b, "Two pair: %v's and %v's with %v kicker", h.TopCard(), h.SecondCard(), h.ThirdCard())
+		fmt.Fprintf(b, "Two pair: %-v's and %-v's with %-v kicker", h.TopCard(), h.SecondCard(), h.ThirdCard())
 	case Trips:
-		fmt.Fprintf(b, "Three of a kind: %v's", h.TopCard())
+		fmt.Fprintf(b, "Three of a kind: %-v's", h.TopCard())
 	case Straight:
-		fmt.Fprintf(b, "Straight with %v high", h.TopCard())
+		fmt.Fprintf(b, "Straight with %-v high", h.TopCard())
 	case Flush:
 		b.WriteString("Flush")
 	case FullHouse:
-		fmt.Fprintf(b, "Full house: %v's and %v's", h.TopCard(), h.SecondCard())
+		fmt.Fprintf(b, "Full house: %-v's and %-v's", h.TopCard(), h.SecondCard())
 	case FourOfAKind:
-		fmt.Fprintf(b, "Four of a kind: %v", h.TopCard(), h.SecondCard())
+		fmt.Fprintf(b, "Four of a kind: %-v", h.TopCard(), h.SecondCard())
 	case StraightFlush:
 		b.WriteString("Straight Flush")
 	}
