@@ -1,23 +1,14 @@
 package holdem
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 )
 
-type Suit int
-type Value int
 type RoundStatus int
 type PlayerStatus int
 
 const (
-	Undefined Suit = iota
-	Spades
-	Diamonds
-	Hearts
-	Clubs
-
 	Flop RoundStatus = iota
 	Turn
 	River
@@ -65,39 +56,6 @@ type Player struct {
 
 	Hand []Card
 	// AllIn bool
-}
-
-type Card struct {
-	Suit
-	Value
-}
-
-func (s Suit) String() string {
-	switch s {
-	case Spades:
-		return "\u2660"
-	case Hearts:
-		return "\u2665"
-	case Diamonds:
-		return "\u2666"
-	case Clubs:
-		return "\u2663"
-	default:
-		println("INVALID SUIT IN String()")
-		return ""
-	}
-}
-
-func (v Value) String() string {
-	if v <= 10 {
-		return fmt.Sprintf("%d", v)
-	}
-
-	return string(v)
-}
-
-func (c Card) String() string {
-	return fmt.Sprintf("|%s%s|", c.Suit, c.Value)
 }
 
 func New() Game {
@@ -217,20 +175,11 @@ func (g *Game) shufflePlayers() {
 }
 
 func (g *Game) createNewDeck() {
-	g.deck = make([]Card, DECKS*DECK_SIZE, DECKS*DECK_SIZE)
+	g.deck = make([]Card, DECKS*DECK_SIZE)
 
-	suits := []Suit{Spades, Diamonds, Hearts, Clubs}
-	values := []Value{'A', 'K', 'Q', 'J', 10, 9, 8, 7, 6, 5, 4, 3, 2}
-
-	index := 0
-
-	for deck_count := 0; deck_count < DECKS; deck_count += 1 {
-		for _, suit := range suits {
-			for _, value := range values {
-				g.deck[index] = Card{Suit: suit, Value: value}
-				index += 1
-			}
-		}
+	cards := 52 * 4 // cards in deck * suits
+	for i := 0; i < cards; i++ {
+		g.deck[i] = Card(i)
 	}
 }
 

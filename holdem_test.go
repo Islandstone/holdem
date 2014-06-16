@@ -7,25 +7,7 @@ import (
 )
 
 func isValidCard(c Card) bool {
-	if c.Suit != Clubs &&
-		c.Suit != Diamonds &&
-		c.Suit != Hearts &&
-		c.Suit != Spades {
-		println("Invalid suit", c.Suit)
-		return false
-	}
-
-	if c.Value > 0 && c.Value <= 10 {
-		return true
-	}
-
-	switch c.Value {
-	case 'A', 'K', 'Q', 'J':
-		return true
-	}
-
-	println("Invalid value", c.Value)
-	return false
+	return c >= 0 && c < (52*4)
 }
 
 func isValidDeck(deck []Card) bool {
