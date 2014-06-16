@@ -126,11 +126,14 @@ func (h Hand) Display() (HandValue, string) {
 	case HighCard, Pair, TwoPair, Trips, Straight, FullHouse, FourOfAKind:
 		str = val.String()
 	case Flush, StraightFlush:
-		if cls == Flush {
-			str = "Flush"
-		} else {
-			str = "Straight Flush"
+		if cls == StraightFlush {
+			if val.TopCard().Value() == 12 {
+				str = "Royal "
+			} else {
+				str = "Straight "
+			}
 		}
+
 		var suitRune rune
 		switch {
 		case nBitsTable[ss] >= 5:
@@ -142,7 +145,7 @@ func (h Hand) Display() (HandValue, string) {
 		case nBitsTable[sh] >= 5:
 			suitRune = '\u2665'
 		}
-		str = fmt.Sprintf("%s (%c) with %v high", str, suitRune, val.TopCard())
+		str = fmt.Sprintf("%s%c Flush with %-v high", str, suitRune, val.TopCard())
 	}
 
 	return val, str

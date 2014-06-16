@@ -67,6 +67,18 @@ func TestHand_Display(t *testing.T) {
 	if val, str := hand.Display(); val == 0 || str != exp {
 		t.Errorf(`Expected: "%s", got: "%s"`, exp, str)
 	}
+
+	hand = NewHandStr("2d 3d 4d 5d 6d 7d 8d")
+	exp = "Straight ♦ Flush with 8 high"
+	if val, str := hand.Display(); val == 0 || str != exp {
+		t.Errorf(`Expected: "%s", got: "%s"`, exp, str)
+	}
+
+	hand = NewHandStr("10h jh qh kh 7s 10c ah")
+	exp = "Royal ♥ Flush with A high"
+	if val, str := hand.Display(); val == 0 || str != exp {
+		t.Errorf(`Expected: "%s", got: "%s"`, exp, str)
+	}
 }
 
 func TestHand_Values_5(t *testing.T) {
